@@ -1,0 +1,40 @@
+services:
+  wordpress:
+    image: wordpress:php8.3-fpm
+    restart: always
+    env_file: .env
+    volumes:
+      - wordpress:/var/www/html
+    networks:
+      - wordpress
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx
+    restart: always
+    volumes:
+      - wordpress:/var/www/html
+      - ./nginx-conf:/etc/nginx/conf.d
+    ports:
+      - 80:80
+    networks:
+      - wordpress
+    depends_on:
+      - wordpress
+
+  db:
+    image: mysql:8.0
+    restart: always
+    env_file: .env
+    volumes:
+      - db:/var/lib/mysql
+    networks:
+      - wordpress
+
+volumes:
+  wordpress:
+  db:
+
+networks:
+  wordpress:

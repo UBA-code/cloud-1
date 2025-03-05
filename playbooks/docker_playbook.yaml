@@ -1,0 +1,38 @@
+- name: Install Docker
+  hosts: myhosts
+  remote_user: root
+  tasks:
+    - name: Install required system packages
+      ansible.builtin.apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - git
+        state: latest
+    - name: Add Docker GPG apt Key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+    - name: Add docker repository
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=arm64] https://download.docker.com/linux/ubuntu focal stable"
+        state: present
+    - name: Install docker
+      ansible.builtin.apt:
+        name: docker-ce
+        state: latest
+    - name: Start docker service
+      ansible.builtin.service:
+        name: docker
+        state: started
+    - name: enable docker service
+      ansible.builtin.service:
+        name: docker
+        enabled: true
+    - name: Add the user vagrant to docker group
+      ansible.builtin.user:
+        name: vagrant
+        groups: docker
+        append: yes
