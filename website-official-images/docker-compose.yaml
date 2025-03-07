@@ -5,6 +5,7 @@ services:
     env_file: .env
     volumes:
       - wordpress:/var/www/html
+      - "./scripts/wordpress_secure_installation.sh:/secure_install.sh"
     networks:
       - wordpress
     depends_on:
@@ -31,6 +32,15 @@ services:
       - db:/var/lib/mysql
     networks:
       - wordpress
+
+  phpMyAdmin:
+    image: phpmyadmin
+    restart: always
+    env_file: .env
+    networks:
+      - wordpress
+    ports:
+      - 8080:80
 
 volumes:
   wordpress:

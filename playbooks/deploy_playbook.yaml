@@ -5,9 +5,13 @@
     - name: Clone the repository of source files
       ansible.builtin.git:
         repo: 'https://github.com/UBA-code/cloud-1-blog.git'
-        dest: /site
+        dest: $HOME/site
+    - name: Copy the .env into wordpress directory
+      ansible.builtin.copy:
+        src: ../secrets/.env
+        dest: $HOME/site
     - name: build and run the containers
-      ansible.builtin.command: chdir=/site/ docker compose up --build -d
+      ansible.builtin.command: chdir=$HOME/site/ docker compose up --build -d
       register: docker_result
     - name: Display the output
       debug:
