@@ -14,19 +14,21 @@
         dest: $HOME/site
 
     - name: build and run the containers
-      ansible.builtin.command: chdir=$HOME/site/ docker compose up --build -d
+      ansible.builtin.command:
+        cmd: docker compose up --build -d
+        chdir: /home/ubuntu/site
+      become: yes
 
     - name: Ensure a duckdns update ip curl request is added to .bachrc
       ansible.builtin.lineinfile:
         path: "$HOME/.bashrc"
-        line: 'curl "https://www.duckdns.org/update?domains=cloud-2&token=a4a8a73c-9a63-4a9a-8646-4f19a6d54270&ip=&verbose=true"' # The command you want to add
+        line: 'curl "https://www.duckdns.org/update?domains=cloud-2&token=a4a8a73c-9a63-4a9a-8646-4f19a6d54270&ip=&verbose=true"'
         state: present
         create: yes
         mode: "0644"
 
-    - name: run the .profile to make changes immediately
-      ansible.builtin.shell: ". $HOME/.bashrc"
-      changed_when: false
+    - name: Make a curl request to duckdns to change ip of domain 'cloud-1' into the machine ip
+      ansible.builtin.command: curl "https://www.duckdns.org/update?domains=cloud-2&token=a4a8a73c-9a63-4a9a-8646-4f19a6d54270&ip=&verbose=true"
       register: duckdns_response
 
     - name: Print the duckdns reponse
@@ -35,8 +37,14 @@
 
     - name: Generate let's encrypt certificates
       ansible.builtin.command:
-        cmd: "docker compose run --rm certbot certonly --webroot --webroot-path=/var/www/certbot --email ymks9330@gmail.com --agree-tos --no-eff-email -d cloud-2.duckdns.org --non-interactive"
-        chdir: "$HOME/site"
+        cmd: docker compose run --rm certbot certonly --webroot --webroot-path=/var/www/certbot --email ymks9330@gmail.com --agree-tos --no-eff-email -d cloud-2.duckdns.org --non-interactive
+        chdir: /home/ubuntu/site
+      register: certbot_output
+      become: yes
+
+    - name: Print certbot container output
+      ansible.builtin.debug:
+        msg: "{{ certbot_output.stdout }}"
 
     - name: Change the nginx config file to final one that contain ssl
       ansible.builtin.shell:
@@ -46,7 +54,8 @@
     - name: Restart nginx
       ansible.builtin.command:
         cmd: docker compose exec nginx nginx -s reload
-        chdir: $HOME/site
+        chdir: /home/ubuntu/site
+      become: yes
 
     - name: Copy renew script to the server
       ansible.builtin.copy:
