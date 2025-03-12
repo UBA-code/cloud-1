@@ -41,6 +41,7 @@
         chdir: /home/ubuntu/site
       register: certbot_output
       become: yes
+      failed_when: 'certbot_output.rc != 0 and "unauthorized" not in certbot_output.stdout'
 
     - name: Print certbot container output
       ansible.builtin.debug:
@@ -56,6 +57,7 @@
         cmd: docker compose exec nginx nginx -s reload
         chdir: /home/ubuntu/site
       become: yes
+      when: 'certbot_output.rc == 0 and "unauthorized" not in certbot_output.stdout'
 
     - name: Copy renew script to the server
       ansible.builtin.copy:
